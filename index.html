@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sleek Phase Timer</title>
+    <meta name="description" content="A modern, aesthetic phase timer web application.">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-start: #0f172a;
+            --bg-end: #1e1b4b;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.05);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent: #8b5cf6;
+            --accent-hover: #7c3aed;
+            --accent-glow: rgba(139, 92, 246, 0.15);
+            --danger: #ef4444;
+            --danger-glow: rgba(239, 68, 68, 0.15);
+            --success: #10b981;
+            --success-glow: rgba(16, 185, 129, 0.15);
+            --neutral: #334155;
+            --neutral-hover: #475569;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, var(--bg-start), var(--bg-end));
+            color: var(--text-primary);
+            overflow: hidden;
+        }
+
+        /* Animated background elements */
+        .glow {
+            position: absolute;
+            width: 60vw;
+            height: 60vw;
+            background: radial-gradient(circle, var(--accent-glow) 0%, rgba(0, 0, 0, 0) 70%);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            z-index: 0;
+            animation: pulse 8s ease-in-out infinite alternate;
+            transition: background 0.5s ease;
+        }
+
+        @keyframes pulse {
+            0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.5; }
+            100% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 3rem;
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            transition: transform 0.3s ease;
+        }
+
+        .container:hover {
+            transform: translateY(-5px);
+        }
+
+        h1 {
+            font-weight: 300;
+            color: var(--text-secondary);
+            font-size: 1.25rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+        }
+
+        .phases-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            text-align: left;
+            margin-bottom: 1rem;
+        }
+
+        .phase-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid transparent;
+            transition: all 0.3s ease;
+            color: var(--text-secondary);
+        }
+
+        .phase-item.active {
+            background: rgba(139, 92, 246, 0.1);
+            border-color: rgba(139, 92, 246, 0.3);
+            color: var(--text-primary);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .phase-item.completed {
+            opacity: 0.5;
+            text-decoration: line-through;
+        }
+
+        .phase-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .phase-duration {
+            font-variant-numeric: tabular-nums;
+            font-family: monospace;
+            font-size: 1.1rem;
+        }
+
+        .total-time-display {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            font-variant-numeric: tabular-nums;
+            font-family: monospace;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            display: inline-block;
+            margin-bottom: -0.5rem;
+        }
+
+        /* Edit Mode Styles */
+        .edit-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+
+        .btn-edit-toggle {
+            display: inline-block;
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--glass-border);
+            padding: 0.4rem 1rem;
+            font-size: 0.9rem;
+        }
+
+        .btn-edit-toggle:hover {
+            color: var(--text-primary);
+            border-color: var(--text-secondary);
+        }
+
+        .phase-item.editing {
+            padding: 0.75rem 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px dashed var(--text-secondary);
+            cursor: move; /* drag handle implication */
+        }
+        
+        .phase-item.editing:active {
+            opacity: 0.7;
+        }
+
+        .phase-input-group {
+            display: flex;
+            gap: 10px;
+            flex-grow: 1;
+            align-items: center;
+        }
+
+        .drag-handle {
+            color: var(--text-secondary);
+            cursor: grab;
+            padding-right: 10px;
+            user-select: none;
+        }
+
+        .phase-name-input {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 1rem;
+            padding: 0.5rem;
+            border-radius: 6px;
+            flex-grow: 1;
+        }
+
+        .phase-duration-input {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            font-family: monospace;
+            font-size: 1rem;
+            padding: 0.5rem;
+            border-radius: 6px;
+            width: 80px;
+            text-align: center;
+        }
+
+        .btn-remove-phase {
+            display: inline-block;
+            background: transparent;
+            color: var(--danger);
+            border: none;
+            padding: 0.5rem;
+            font-size: 1.2rem;
+            cursor: pointer;
+            border-radius: 6px;
+        }
+
+        .btn-remove-phase:hover {
+            background: var(--danger-glow);
+        }
+
+        .btn-add-phase {
+            display: block;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-secondary);
+            border: 1px dashed var(--glass-border);
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn-add-phase:hover {
+            color: var(--text-primary);
+            border-color: var(--text-secondary);
+        }
+
+        .time-display {
+            font-size: 4.5rem;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -2px;
+            text-shadow: 0 0 40px rgba(255, 255, 255, 0.1);
+            background: linear-gradient(to right, #fff, #cbd5e1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            transition: all 0.3s ease;
+        }
+
+        .time-display.negative {
+            background: linear-gradient(to right, #fca5a5, #ef4444);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 40px rgba(239, 68, 68, 0.2);
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        button {
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 600;
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 9999px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            display: none; /* hidden by default, shown by JS */
+        }
+
+        button::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.1);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        button:hover::after {
+            opacity: 1;
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        .btn-start {
+            display: inline-block;
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 4px 14px 0 rgba(139, 92, 246, 0.39);
+        }
+
+        .btn-prev {
+            display: inline-block;
+            background: var(--neutral);
+            color: white;
+        }
+
+        .btn-next {
+            display: inline-block;
+            background: var(--success);
+            color: white;
+            box-shadow: 0 4px 14px 0 rgba(16, 185, 129, 0.39);
+        }
+
+        .btn-pause {
+            display: inline-block;
+            background: var(--neutral);
+            color: white;
+        }
+
+        .btn-reset {
+            display: inline-block;
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--glass-border);
+        }
+
+        .btn-reset:hover {
+            color: var(--text-primary);
+            border-color: var(--text-secondary);
+        }
+
+        /* State specific glow colors */
+        body.timer-running .glow {
+            background: radial-gradient(circle, var(--success-glow) 0%, rgba(0, 0, 0, 0) 70%);
+        }
+        
+        body.timer-negative .glow {
+            background: radial-gradient(circle, var(--danger-glow) 0%, rgba(0, 0, 0, 0) 70%);
+        }
+    </style>
+</head>
+<body>
+    <div class="glow"></div>
+    <main class="container">
+        <div class="edit-controls">
+            <h1>Phase Timer</h1>
+            <button class="btn-edit-toggle" id="editToggleBtn">Edit Phases</button>
+        </div>
+        
+        <div class="phases-list" id="phasesList">
+            <!-- Populated by JS -->
+        </div>
+
+        <div>
+            <div class="total-time-display" id="totalDisplay">Total Remaining: 08:00</div>
+        </div>
+
+        <div class="time-display" id="display">02:00</div>
+        
+        <div class="controls">
+            <button class="btn-prev" id="prevBtn" style="display: none;">Previous</button>
+            <button class="btn-start" id="startBtn">Start</button>
+            <button class="btn-pause" id="pauseBtn" style="display: none;">Pause</button>
+            <button class="btn-next" id="nextBtn" style="display: none;">Next Phase</button>
+            <button class="btn-reset" id="resetBtn">Reset</button>
+        </div>
+    </main>
+
+    <script>
+        let PHASES = [
+            { name: "Phase 1", durationSec: 120 },
+            { name: "Phase 2", durationSec: 120 },
+            { name: "Phase 3", durationSec: 120 },
+            { name: "Phase 4", durationSec: 120 }
+        ];
+
+        let currentPhaseIndex = 0;
+        
+        // Timer state for the current phase
+        let isRunning = false;
+        let isEditing = false;
+        let phaseStartTime = 0;
+        let phaseAccumulatedTimes = PHASES.map(() => 0);
+        let timerInterval = null;
+        let dragSrcEl = null;
+
+        // DOM Elements
+        const phasesListEl = document.getElementById('phasesList');
+        const displayEl = document.getElementById('display');
+        const totalDisplayEl = document.getElementById('totalDisplay');
+        const prevBtn = document.getElementById('prevBtn');
+        const startBtn = document.getElementById('startBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const editToggleBtn = document.getElementById('editToggleBtn');
+
+        function getPhaseRemainingMs(index) {
+            let elapsed = phaseAccumulatedTimes[index];
+            if (isRunning && index === currentPhaseIndex) {
+                elapsed += Date.now() - phaseStartTime;
+            }
+            return (PHASES[index].durationSec * 1000) - elapsed;
+        }
+
+        function updateAllPhaseDurations() {
+            let totalMs = 0;
+            PHASES.forEach((_, index) => {
+                const ms = getPhaseRemainingMs(index);
+                totalMs += ms;
+                const el = document.getElementById(`phase-duration-${index}`);
+                if (el) {
+                    el.textContent = formatTimeRemaining(ms);
+                }
+            });
+            if (totalDisplayEl) {
+                totalDisplayEl.textContent = "Total Remaining: " + formatTimeRemaining(totalMs);
+            }
+        }
+
+        function initUI() {
+            phasesListEl.innerHTML = '';
+            
+            PHASES.forEach((phase, index) => {
+                const el = document.createElement('div');
+                el.className = `phase-item ${!isEditing && index === currentPhaseIndex ? 'active' : ''} ${!isEditing && index < currentPhaseIndex ? 'completed' : ''}`;
+                if (isEditing) {
+                    el.classList.add('editing');
+                    el.draggable = true;
+                    el.addEventListener('dragstart', handleDragStart);
+                    el.addEventListener('dragover', handleDragOver);
+                    el.addEventListener('drop', handleDrop);
+                    el.addEventListener('dragend', handleDragEnd);
+                }
+                el.id = `phase-${index}`;
+                el.dataset.index = index;
+                
+                if (isEditing) {
+                    const dragHandle = document.createElement('span');
+                    dragHandle.className = 'drag-handle';
+                    dragHandle.innerHTML = '⋮⋮';
+                    
+                    const inputGroup = document.createElement('div');
+                    inputGroup.className = 'phase-input-group';
+                    
+                    const nameInput = document.createElement('input');
+                    nameInput.className = 'phase-name-input';
+                    nameInput.value = phase.name;
+                    nameInput.addEventListener('change', (e) => {
+                        PHASES[index].name = e.target.value;
+                    });
+
+                    const durationInput = document.createElement('input');
+                    durationInput.className = 'phase-duration-input';
+                    const mins = Math.floor(phase.durationSec / 60).toString().padStart(2, '0');
+                    const secs = (phase.durationSec % 60).toString().padStart(2, '0');
+                    durationInput.value = `${mins}:${secs}`;
+                    durationInput.placeholder = "MM:SS";
+                    durationInput.addEventListener('change', (e) => {
+                        const parts = e.target.value.split(':');
+                        let totalSecs = 120; // fallback
+                        if (parts.length === 2) {
+                            totalSecs = (parseInt(parts[0]) || 0) * 60 + (parseInt(parts[1]) || 0);
+                        } else if (parts.length === 1) {
+                            totalSecs = parseInt(parts[0]) || 0;
+                        }
+                        PHASES[index].durationSec = totalSecs;
+                    });
+
+                    const removeBtn = document.createElement('button');
+                    removeBtn.className = 'btn-remove-phase';
+                    removeBtn.innerHTML = '×';
+                    removeBtn.onclick = () => {
+                        if (PHASES.length > 1) {
+                            PHASES.splice(index, 1);
+                            phaseAccumulatedTimes.splice(index, 1);
+                            if (currentPhaseIndex >= index && currentPhaseIndex > 0) currentPhaseIndex--;
+                            initUI(); // re-render
+                        }
+                    };
+
+                    inputGroup.appendChild(nameInput);
+                    inputGroup.appendChild(durationInput);
+                    
+                    el.appendChild(dragHandle);
+                    el.appendChild(inputGroup);
+                    el.appendChild(removeBtn);
+                } else {
+                    const nameEl = document.createElement('span');
+                    nameEl.className = 'phase-name';
+                    nameEl.textContent = phase.name;
+                    
+                    const durationEl = document.createElement('span');
+                    durationEl.className = 'phase-duration';
+                    durationEl.id = `phase-duration-${index}`;
+
+                    el.appendChild(nameEl);
+                    el.appendChild(durationEl);
+                }
+                
+                phasesListEl.appendChild(el);
+            });
+            
+            if (isEditing) {
+                const addBtn = document.createElement('button');
+                addBtn.className = 'btn-add-phase';
+                addBtn.textContent = '+ Add Phase';
+                addBtn.onclick = () => {
+                    PHASES.push({ name: `Phase ${PHASES.length + 1}`, durationSec: 120 });
+                    phaseAccumulatedTimes.push(0);
+                    initUI();
+                };
+                phasesListEl.appendChild(addBtn);
+                editToggleBtn.textContent = "Done Editing";
+                editToggleBtn.style.color = "var(--success)";
+                editToggleBtn.style.borderColor = "var(--success)";
+                
+                document.querySelector('.controls').style.opacity = '0.3';
+                document.querySelector('.controls').style.pointerEvents = 'none';
+            } else {
+                editToggleBtn.textContent = "Edit Phases";
+                editToggleBtn.style.color = "var(--text-secondary)";
+                editToggleBtn.style.borderColor = "var(--glass-border)";
+                
+                document.querySelector('.controls').style.opacity = '1';
+                document.querySelector('.controls').style.pointerEvents = 'auto';
+
+                updateAllPhaseDurations();
+                updateButtons();
+                
+                if (currentPhaseIndex < PHASES.length) {
+                    renderDisplay(getPhaseRemainingMs(currentPhaseIndex));
+                } else {
+                    displayEl.textContent = "Done!";
+                }
+            }
+            document.body.classList.remove('timer-running', 'timer-negative');
+        }
+
+        // Drag and drop handlers
+        function handleDragStart(e) {
+            dragSrcEl = this;
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', this.innerHTML);
+            this.style.opacity = '0.4';
+        }
+
+        function handleDragOver(e) {
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        }
+
+        function handleDrop(e) {
+            if (e.stopPropagation) {
+                e.stopPropagation();
+            }
+            if (dragSrcEl !== this) {
+                const fromIndex = parseInt(dragSrcEl.dataset.index);
+                const toIndex = parseInt(this.dataset.index);
+                
+                // Swap purely in phases array, time accumulation is reset during edit
+                const movedPhase = PHASES.splice(fromIndex, 1)[0];
+                PHASES.splice(toIndex, 0, movedPhase);
+                
+                // Synchronize accumulated times
+                const movedTime = phaseAccumulatedTimes.splice(fromIndex, 1)[0];
+                phaseAccumulatedTimes.splice(toIndex, 0, movedTime);
+                
+                // update currentPhaseIndex appropriately if needed, simpler to just re-render
+                initUI();
+            }
+            return false;
+        }
+
+        function handleDragEnd(e) {
+            this.style.opacity = '1';
+            let items = document.querySelectorAll('.phase-item.editing');
+            items.forEach(function (item) {
+                item.style.opacity = '1'; // clean up
+            });
+        }
+
+        function toggleEditMode() {
+            if (isRunning) pauseTimer();
+            isEditing = !isEditing;
+            initUI();
+        }
+
+        function updatePhaseUI() {
+            PHASES.forEach((_, index) => {
+                const el = document.getElementById(`phase-${index}`);
+                if (el) {
+                    el.className = `phase-item ${index === currentPhaseIndex ? 'active' : ''} ${index < currentPhaseIndex ? 'completed' : ''}`;
+                }
+            });
+        }
+
+        function formatTimeRemaining(msRemaining) {
+            const isNegative = msRemaining < 0;
+            const absMs = Math.abs(msRemaining);
+            
+            const hours = Math.floor(absMs / 3600000);
+            const minutes = Math.floor((absMs % 3600000) / 60000).toString().padStart(2, '0');
+            const seconds = Math.floor((absMs % 60000) / 1000).toString().padStart(2, '0');
+            
+            const sign = isNegative ? '-' : '';
+            if (hours > 0) {
+                const hPad = hours.toString().padStart(2, '0');
+                return `${sign}${hPad}:${minutes}:${seconds}`;
+            }
+            return `${sign}${minutes}:${seconds}`;
+        }
+
+        function renderDisplay(msRemaining) {
+            displayEl.textContent = formatTimeRemaining(msRemaining);
+            
+            if (msRemaining < 0) {
+                if (!displayEl.classList.contains('negative')) {
+                    displayEl.classList.add('negative');
+                }
+                document.body.classList.add('timer-negative');
+                document.body.classList.remove('timer-running');
+            } else {
+                displayEl.classList.remove('negative');
+                if (isRunning) {
+                    document.body.classList.add('timer-running');
+                    document.body.classList.remove('timer-negative');
+                }
+            }
+        }
+
+        function updateDisplay() {
+            if (currentPhaseIndex >= PHASES.length) return;
+            const msRemaining = getPhaseRemainingMs(currentPhaseIndex);
+            renderDisplay(msRemaining);
+            
+            const actDurationEl = document.getElementById(`phase-duration-${currentPhaseIndex}`);
+            if (actDurationEl) {
+                actDurationEl.textContent = formatTimeRemaining(msRemaining);
+            }
+            
+            let totalMs = 0;
+            for (let i = 0; i < PHASES.length; i++) {
+                totalMs += getPhaseRemainingMs(i);
+            }
+            if (totalDisplayEl) {
+                totalDisplayEl.textContent = "Total Remaining: " + formatTimeRemaining(totalMs);
+            }
+        }
+
+        function updateButtons() {
+            startBtn.style.display = 'none';
+            pauseBtn.style.display = 'none';
+            nextBtn.style.display = 'none';
+            prevBtn.style.display = 'none';
+            
+            if (currentPhaseIndex >= PHASES.length) {
+                // Done state
+                prevBtn.style.display = 'block';
+                return;
+            }
+
+            if (!isRunning) {
+                startBtn.style.display = 'block';
+                startBtn.textContent = phaseAccumulatedTimes[currentPhaseIndex] > 0 ? 'Resume' : 'Start';
+            } else {
+                pauseBtn.style.display = 'block';
+            }
+            
+            if (currentPhaseIndex < PHASES.length - 1) {
+                nextBtn.style.display = 'block';
+            }
+            if (currentPhaseIndex > 0) {
+                prevBtn.style.display = 'block';
+            }
+        }
+
+        function loop() {
+            if (isRunning && currentPhaseIndex < PHASES.length) {
+                updateDisplay();
+                timerInterval = requestAnimationFrame(loop);
+            }
+        }
+
+        function startTimer() {
+            if (currentPhaseIndex >= PHASES.length) return;
+            
+            if (!isRunning) {
+                isRunning = true;
+                phaseStartTime = Date.now();
+                updateButtons();
+                updateDisplay(); // trigger class changes immediately
+                timerInterval = requestAnimationFrame(loop);
+            }
+        }
+
+        function pauseTimer() {
+            if (isRunning) {
+                isRunning = false;
+                phaseAccumulatedTimes[currentPhaseIndex] += Date.now() - phaseStartTime;
+                cancelAnimationFrame(timerInterval);
+                updateButtons();
+                document.body.classList.remove('timer-running', 'timer-negative');
+                updateDisplay();
+                updateAllPhaseDurations();
+            }
+        }
+
+        function jumpToPhase(newIndex) {
+            if (isRunning && currentPhaseIndex < PHASES.length) {
+                phaseAccumulatedTimes[currentPhaseIndex] += Date.now() - phaseStartTime;
+            }
+            currentPhaseIndex = newIndex;
+            if (isRunning) {
+                phaseStartTime = Date.now();
+                updateDisplay();
+            } else {
+                renderDisplay(getPhaseRemainingMs(currentPhaseIndex));
+            }
+            updatePhaseUI();
+            updateButtons();
+            updateAllPhaseDurations();
+        }
+
+        function prevPhase() {
+            if (currentPhaseIndex > 0) {
+                if (currentPhaseIndex === PHASES.length) {
+                    isRunning = false; // from done state
+                    jumpToPhase(PHASES.length - 1);
+                } else {
+                    jumpToPhase(currentPhaseIndex - 1);
+                }
+            }
+        }
+
+        function nextPhase() {
+            if (currentPhaseIndex < PHASES.length - 1) {
+                jumpToPhase(currentPhaseIndex + 1);
+            } else if (currentPhaseIndex === PHASES.length - 1) {
+                if (isRunning) {
+                    phaseAccumulatedTimes[currentPhaseIndex] += Date.now() - phaseStartTime;
+                }
+                currentPhaseIndex = PHASES.length;
+                isRunning = false;
+                cancelAnimationFrame(timerInterval);
+                updatePhaseUI();
+                updateButtons();
+                updateAllPhaseDurations();
+                displayEl.classList.remove('negative');
+                document.body.classList.remove('timer-running', 'timer-negative');
+                displayEl.textContent = "Done!";
+            }
+        }
+
+        function resetTimer() {
+            isRunning = false;
+            cancelAnimationFrame(timerInterval);
+            currentPhaseIndex = 0;
+            phaseAccumulatedTimes = PHASES.map(() => 0);
+            phaseStartTime = 0;
+            initUI();
+        }
+
+        editToggleBtn.addEventListener('click', toggleEditMode);
+        prevBtn.addEventListener('click', prevPhase);
+        startBtn.addEventListener('click', startTimer);
+        pauseBtn.addEventListener('click', pauseTimer);
+        nextBtn.addEventListener('click', nextPhase);
+        resetBtn.addEventListener('click', resetTimer);
+
+        // Initial setup
+        initUI();
+    </script>
+</body>
+</html>
