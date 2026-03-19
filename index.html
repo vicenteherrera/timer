@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -35,16 +36,16 @@
             font-family: 'Outfit', sans-serif;
             min-height: 100vh;
             display: flex;
-            justify-content: center;
-            align-items: center;
+            flex-direction: column;
             background: linear-gradient(135deg, var(--bg-start), var(--bg-end));
             color: var(--text-primary);
-            overflow: hidden;
+            overflow-x: hidden;
+            padding: 2rem 1rem;
         }
 
         /* Animated background elements */
         .glow {
-            position: absolute;
+            position: fixed;
             width: 60vw;
             height: 60vw;
             background: radial-gradient(circle, var(--accent-glow) 0%, rgba(0, 0, 0, 0) 70%);
@@ -58,11 +59,19 @@
         }
 
         @keyframes pulse {
-            0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.5; }
-            100% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+            0% {
+                transform: translate(-50%, -50%) scale(0.8);
+                opacity: 0.5;
+            }
+
+            100% {
+                transform: translate(-50%, -50%) scale(1.2);
+                opacity: 1;
+            }
         }
 
         .container {
+            margin: auto;
             position: relative;
             z-index: 1;
             background: var(--glass-bg);
@@ -174,9 +183,10 @@
             padding: 0.75rem 1rem;
             background: rgba(255, 255, 255, 0.05);
             border: 1px dashed var(--text-secondary);
-            cursor: move; /* drag handle implication */
+            cursor: move;
+            /* drag handle implication */
         }
-        
+
         .phase-item.editing:active {
             opacity: 0.7;
         }
@@ -248,6 +258,7 @@
         }
 
         .time-display {
+            display: none;
             font-size: 4.5rem;
             font-weight: 600;
             font-variant-numeric: tabular-nums;
@@ -255,6 +266,7 @@
             text-shadow: 0 0 40px rgba(255, 255, 255, 0.1);
             background: linear-gradient(to right, #fff, #cbd5e1);
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
             transition: all 0.3s ease;
         }
@@ -262,16 +274,34 @@
         .time-display.negative {
             background: linear-gradient(to right, #fca5a5, #ef4444);
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
             text-shadow: 0 0 40px rgba(239, 68, 68, 0.2);
-            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+            animation: shake 0.5s cubic-bezier(.36, .07, .19, .97) both;
         }
 
         @keyframes shake {
-            10%, 90% { transform: translate3d(-1px, 0, 0); }
-            20%, 80% { transform: translate3d(2px, 0, 0); }
-            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
-            40%, 60% { transform: translate3d(4px, 0, 0); }
+
+            10%,
+            90% {
+                transform: translate3d(-1px, 0, 0);
+            }
+
+            20%,
+            80% {
+                transform: translate3d(2px, 0, 0);
+            }
+
+            30%,
+            50%,
+            70% {
+                transform: translate3d(-4px, 0, 0);
+            }
+
+            40%,
+            60% {
+                transform: translate3d(4px, 0, 0);
+            }
         }
 
         .controls {
@@ -282,16 +312,17 @@
 
         button {
             font-family: inherit;
-            font-size: 1rem;
+            font-size: 0.85rem;
             font-weight: 600;
-            padding: 0.8rem 1.5rem;
+            padding: 0.6rem 1.2rem;
             border: none;
             border-radius: 9999px;
             cursor: pointer;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
-            display: none; /* hidden by default, shown by JS */
+            display: none;
+            /* hidden by default, shown by JS */
         }
 
         button::after {
@@ -353,12 +384,13 @@
         body.timer-running .glow {
             background: radial-gradient(circle, var(--success-glow) 0%, rgba(0, 0, 0, 0) 70%);
         }
-        
+
         body.timer-negative .glow {
             background: radial-gradient(circle, var(--danger-glow) 0%, rgba(0, 0, 0, 0) 70%);
         }
     </style>
 </head>
+
 <body>
     <div class="glow"></div>
     <main class="container">
@@ -366,7 +398,7 @@
             <h1>Phase Timer</h1>
             <button class="btn-edit-toggle" id="editToggleBtn">Edit Phases</button>
         </div>
-        
+
         <div class="phases-list" id="phasesList">
             <!-- Populated by JS -->
         </div>
@@ -376,7 +408,7 @@
         </div>
 
         <div class="time-display" id="display">02:00</div>
-        
+
         <div class="controls">
             <button class="btn-prev" id="prevBtn" style="display: none;">Previous</button>
             <button class="btn-start" id="startBtn">Start</button>
@@ -388,14 +420,17 @@
 
     <script>
         let PHASES = [
-            { name: "Phase 1", durationSec: 120 },
-            { name: "Phase 2", durationSec: 120 },
-            { name: "Phase 3", durationSec: 120 },
-            { name: "Phase 4", durationSec: 120 }
+            { name: "Attendance & buffer", durationSec: 120 },
+            { name: "L10 structure", durationSec: 60 },
+            { name: "Practice Status", durationSec: 120 },
+            { name: "Members status", durationSec: 300 },
+            { name: "Conferences and events", durationSec: 240 },
+            { name: "Project Ideas", durationSec: 780 },
+            { name: "Wrap-up", durationSec: 60 }
         ];
 
         let currentPhaseIndex = 0;
-        
+
         // Timer state for the current phase
         let isRunning = false;
         let isEditing = false;
@@ -440,7 +475,7 @@
 
         function initUI() {
             phasesListEl.innerHTML = '';
-            
+
             PHASES.forEach((phase, index) => {
                 const el = document.createElement('div');
                 el.className = `phase-item ${!isEditing && index === currentPhaseIndex ? 'active' : ''} ${!isEditing && index < currentPhaseIndex ? 'completed' : ''}`;
@@ -454,15 +489,15 @@
                 }
                 el.id = `phase-${index}`;
                 el.dataset.index = index;
-                
+
                 if (isEditing) {
                     const dragHandle = document.createElement('span');
                     dragHandle.className = 'drag-handle';
                     dragHandle.innerHTML = '⋮⋮';
-                    
+
                     const inputGroup = document.createElement('div');
                     inputGroup.className = 'phase-input-group';
-                    
+
                     const nameInput = document.createElement('input');
                     nameInput.className = 'phase-name-input';
                     nameInput.value = phase.name;
@@ -501,7 +536,7 @@
 
                     inputGroup.appendChild(nameInput);
                     inputGroup.appendChild(durationInput);
-                    
+
                     el.appendChild(dragHandle);
                     el.appendChild(inputGroup);
                     el.appendChild(removeBtn);
@@ -509,7 +544,7 @@
                     const nameEl = document.createElement('span');
                     nameEl.className = 'phase-name';
                     nameEl.textContent = phase.name;
-                    
+
                     const durationEl = document.createElement('span');
                     durationEl.className = 'phase-duration';
                     durationEl.id = `phase-duration-${index}`;
@@ -517,10 +552,10 @@
                     el.appendChild(nameEl);
                     el.appendChild(durationEl);
                 }
-                
+
                 phasesListEl.appendChild(el);
             });
-            
+
             if (isEditing) {
                 const addBtn = document.createElement('button');
                 addBtn.className = 'btn-add-phase';
@@ -534,20 +569,20 @@
                 editToggleBtn.textContent = "Done Editing";
                 editToggleBtn.style.color = "var(--success)";
                 editToggleBtn.style.borderColor = "var(--success)";
-                
+
                 document.querySelector('.controls').style.opacity = '0.3';
                 document.querySelector('.controls').style.pointerEvents = 'none';
             } else {
                 editToggleBtn.textContent = "Edit Phases";
                 editToggleBtn.style.color = "var(--text-secondary)";
                 editToggleBtn.style.borderColor = "var(--glass-border)";
-                
+
                 document.querySelector('.controls').style.opacity = '1';
                 document.querySelector('.controls').style.pointerEvents = 'auto';
 
                 updateAllPhaseDurations();
                 updateButtons();
-                
+
                 if (currentPhaseIndex < PHASES.length) {
                     renderDisplay(getPhaseRemainingMs(currentPhaseIndex));
                 } else {
@@ -580,15 +615,15 @@
             if (dragSrcEl !== this) {
                 const fromIndex = parseInt(dragSrcEl.dataset.index);
                 const toIndex = parseInt(this.dataset.index);
-                
+
                 // Swap purely in phases array, time accumulation is reset during edit
                 const movedPhase = PHASES.splice(fromIndex, 1)[0];
                 PHASES.splice(toIndex, 0, movedPhase);
-                
+
                 // Synchronize accumulated times
                 const movedTime = phaseAccumulatedTimes.splice(fromIndex, 1)[0];
                 phaseAccumulatedTimes.splice(toIndex, 0, movedTime);
-                
+
                 // update currentPhaseIndex appropriately if needed, simpler to just re-render
                 initUI();
             }
@@ -621,11 +656,11 @@
         function formatTimeRemaining(msRemaining) {
             const isNegative = msRemaining < 0;
             const absMs = Math.abs(msRemaining);
-            
+
             const hours = Math.floor(absMs / 3600000);
             const minutes = Math.floor((absMs % 3600000) / 60000).toString().padStart(2, '0');
             const seconds = Math.floor((absMs % 60000) / 1000).toString().padStart(2, '0');
-            
+
             const sign = isNegative ? '-' : '';
             if (hours > 0) {
                 const hPad = hours.toString().padStart(2, '0');
@@ -636,7 +671,7 @@
 
         function renderDisplay(msRemaining) {
             displayEl.textContent = formatTimeRemaining(msRemaining);
-            
+
             if (msRemaining < 0) {
                 if (!displayEl.classList.contains('negative')) {
                     displayEl.classList.add('negative');
@@ -656,12 +691,12 @@
             if (currentPhaseIndex >= PHASES.length) return;
             const msRemaining = getPhaseRemainingMs(currentPhaseIndex);
             renderDisplay(msRemaining);
-            
+
             const actDurationEl = document.getElementById(`phase-duration-${currentPhaseIndex}`);
             if (actDurationEl) {
                 actDurationEl.textContent = formatTimeRemaining(msRemaining);
             }
-            
+
             let totalMs = 0;
             for (let i = 0; i < PHASES.length; i++) {
                 totalMs += getPhaseRemainingMs(i);
@@ -676,7 +711,7 @@
             pauseBtn.style.display = 'none';
             nextBtn.style.display = 'none';
             prevBtn.style.display = 'none';
-            
+
             if (currentPhaseIndex >= PHASES.length) {
                 // Done state
                 prevBtn.style.display = 'block';
@@ -689,7 +724,7 @@
             } else {
                 pauseBtn.style.display = 'block';
             }
-            
+
             if (currentPhaseIndex < PHASES.length - 1) {
                 nextBtn.style.display = 'block';
             }
@@ -707,7 +742,7 @@
 
         function startTimer() {
             if (currentPhaseIndex >= PHASES.length) return;
-            
+
             if (!isRunning) {
                 isRunning = true;
                 phaseStartTime = Date.now();
@@ -795,4 +830,5 @@
         initUI();
     </script>
 </body>
+
 </html>
